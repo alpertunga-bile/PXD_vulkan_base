@@ -1,4 +1,4 @@
-#include "includes/debug.h"
+#include "includes/logger.h"
 
 int
 main()

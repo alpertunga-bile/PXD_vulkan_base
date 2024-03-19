@@ -25,6 +25,7 @@ find_package(Vulkan REQUIRED)
 set(HEADER_FILES
     includes/debug.h
     includes/utility.h
+    includes/logger.h
 
     # third party headers
     third-party/meshoptimizer/src/meshoptimizer.h
@@ -51,6 +52,7 @@ set(SOURCE_FILES
     main.cpp
 
     sources/debug.cpp
+    sources/logger.cpp
 
     third-party/SIMDString/SIMDString.cpp
 
@@ -88,7 +90,6 @@ target_link_libraries(
     glfw
     meshoptimizer
     volk
-    ${Vulkan_LIBRARIES}
 )
 
 set(CMAKE_BUILD_TYPE Release)

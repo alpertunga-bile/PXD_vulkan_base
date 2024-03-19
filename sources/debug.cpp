@@ -1,54 +1,42 @@
 #include "debug.h"
 
-#include <filesystem>
-#include <format>
+#define VOLK_IMPLEMANTATION
+#include "volk.h"
 
-String
-get_output_string(const char* filename, int line, const char* function_name)
-{
-  auto base_filename = std::filesystem::path(filename).filename().string();
+#include "vulkan/vk_enum_string_helper.h"
 
-  auto formattedString =
-    std::format("{} /_\\ {} /_\\ {}", base_filename, line, function_name);
-
-  return String(formattedString);
-}
+#include "logger.h"
 
 void
-log_info(const char* msg,
+vk_check(VkResult    result,
          const char* time,
          const char* filename,
          int         line,
          const char* function_name)
 {
-  printf("[%s] /_\\ [    INFO] /_\\ %s /_\\ %s\n",
-         time,
-         msg,
-         get_output_string(filename, line, function_name).c_str());
+  if (result == VK_SUCCESS) {
+    return;
+  }
+
+  std::string res = string_VkResult(result);
+
+  log_error(res.c_str(), time, filename, line, function_name);
 }
 
-void
-log_warning(const char* msg,
-            const char* time,
-            const char* filename,
-            int         line,
-            const char* function_name)
+bool
+vk_ret(VkResult    result,
+       const char* time,
+       const char* filename,
+       int         line,
+       const char* function_name)
 {
-  printf("[%s] /_\\ [ WARNING] /_\\ %s /_\\ %s\n",
-         time,
-         msg,
-         get_output_string(filename, line, function_name).c_str());
-}
+  if (result == VK_SUCCESS) {
+    return true;
+  }
 
-void
-log_error(const char* msg,
-          const char* time,
-          const char* filename,
-          int         line,
-          const char* function_name)
-{
-  printf("[%s] /_\\ [  FAILED] /_\\ %s /_\\ %s\n",
-         time,
-         msg,
-         get_output_string(filename, line, function_name).c_str());
+  std::string res = string_VkResult(result);
+
+  log_warning(res.c_str(), time, filename, line, function_name);
+
+  return false;
 }
