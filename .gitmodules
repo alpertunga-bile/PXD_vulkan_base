@@ -1,0 +1,21 @@
+[submodule "third-party/glm"]
+	path = third-party/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "third-party/glfw"]
+	path = third-party/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "third-party/assimp"]
+	path = third-party/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "third-party/SIMDString"]
+	path = third-party/SIMDString
+	url = https://github.com/RobloxResearch/SIMDString.git
+[submodule "third-party/meshoptimizer"]
+	path = third-party/meshoptimizer
+	url = https://github.com/zeux/meshoptimizer.git
+[submodule "third-party/volk"]
+	path = third-party/volk
+	url = https://github.com/zeux/volk.git
+[submodule "third-party/vma"]
+	path = third-party/vma
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
