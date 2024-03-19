@@ -23,6 +23,9 @@ set(ASSIMP_WARNINGS_AS_ERRORS OFF)
 find_package(Vulkan REQUIRED)
 
 set(HEADER_FILES
+    includes/debug.h
+    includes/utility.h
+
     # third party headers
     third-party/meshoptimizer/src/meshoptimizer.h
     third-party/SIMDString/SIMDString.h
@@ -46,6 +49,9 @@ set(HEADER_FILES
 
 set(SOURCE_FILES
     main.cpp
+
+    sources/debug.cpp
+
     third-party/SIMDString/SIMDString.cpp
 
     #[[
@@ -96,6 +102,8 @@ set(CMAKE_BUILD_TYPE Debug)
 target_precompile_headers(
     ${PROJECT_NAME} PRIVATE
     ${HEADER_FILES}
+    <filesystem>
+    <format>
 )
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)

@@ -1,8 +1,9 @@
-#include <iostream>
+#include "includes/debug.h"
 
-int main()
+int
+main()
 {
-    printf("Hello World!\n");
+  LOG_INFO("Startup");
 
-    return 0;
+  return 0;
 }
