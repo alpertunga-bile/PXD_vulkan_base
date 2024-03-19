@@ -1,6 +1,9 @@
 #pragma once
 
 void
+create_log_file();
+
+void
 log_info(const char* msg,
          const char* time,
          const char* filename,
