@@ -31,11 +31,32 @@ set(HEADER_FILES
     third-party/volk/volk.h
     third-party/vma/include/vk_mem_alloc.h
     third-party/glfw/include/GLFW/glfw3.h
+
+    #[[
+    third-party/imgui/imgui.h
+    third-party/imgui/imgui_internal.h
+    third-party/imgui/imconfig.h
+    third-party/imgui/imstb_truetype.h
+    third-party/imgui/imstb_rectpack.h
+    third-party/imgui/imstb_textedit.h
+    third-party/imgui/backends/imgui_impl_glfw.h
+    third-party/imgui/backends/imgui_impl_vulkan.h
+    #]]
 )
 
 set(SOURCE_FILES
     main.cpp
     third-party/SIMDString/SIMDString.cpp
+
+    #[[
+    third-party/imgui/imgui.cpp
+    third-party/imgui/imgui_widgets.cpp
+    third-party/imgui/imgui_tables.cpp
+    third-party/imgui/imgui_draw.cpp
+    third-party/imgui/backends/imgui_impl_glfw.cpp
+    third-party/imgui/backends/imgui_impl_vulkan.cpp
+    #]]
+
     ${HEADER_FILES}
 )
 
@@ -48,6 +69,8 @@ include_directories(
     third-party/volk
     third-party/vma/include
     third-party/SIMDString
+    third-party/imgui
+    third-party/imgui/backends
     ${Vulkan_INCLUDE_DIRS}
 )
 
