@@ -38,6 +38,9 @@ set(PXD_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sources)
 set(PXD_THIRD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third-party)
 set(PXD_SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
 set(PXD_COMPILED_SHADER_DIR ${PXD_SHADER_DIR}/compiled)
+set(PXD_COMPILED_SHADER_INCLUDE_DIR ${PXD_INCLUDE_DIR}/shaders)
+
+set(PXD_OPTIMIZE_SHADERS ON)
 
 ################################################################################
 ## Submodule DEFINITIONS
@@ -119,6 +122,8 @@ include_directories(
     ${Vulkan_INCLUDE_DIRS}
 )
 
+add_compile_definitions(IMGUI_USER_CONFIG="${PXD_INCLUDE_DIR}/gui_config.h")
+
 SET_RELEASE()
 add_subdirectory(${PXD_THIRD_PARTY_DIR}/assimp)
 add_subdirectory(${PXD_THIRD_PARTY_DIR}/glfw)
@@ -163,18 +168,16 @@ if(GLSL_VALIDATOR)
         "${PXD_SHADER_DIR}/*.rcall"
     )
 
-    message(STATUS "GLSL Validator is found. Starting building shaders ...")
-
     foreach(GLSL_FILE ${PXD_GLSL_FILES})
-        message(STATUS "Building ${GLSL_FILE} Shader")
         get_filename_component(GLSL_FILENAME ${GLSL_FILE} NAME_WE)
+
         set(SPIRV_FILE "${PXD_COMPILED_SHADER_DIR}/${GLSL_FILENAME}.spv")
         
         set(SPIRV_OPT_NAME "${GLSL_FILENAME}_opt")
         set(SPIRV_OPT_FILE "${PXD_COMPILED_SHADER_DIR}/${SPIRV_OPT_NAME}.spv")
 
         set(SPIRV_C_NAME "${GLSL_FILENAME}_spv")
-        set(SPIRV_C_HEADER_FILE "${PXD_COMPILED_SHADER_DIR}/${SPIRV_C_NAME}.h")
+        set(SPIRV_C_HEADER_FILE "${PXD_COMPILED_SHADER_INCLUDE_DIR}/${SPIRV_C_NAME}.h")
 
         add_custom_target(
             SPIRV_TARGET
@@ -186,16 +189,21 @@ if(GLSL_VALIDATOR)
             COMMAND ${GLSL_VALIDATOR} -V ${GLSL_FILE} -o ${SPIRV_C_HEADER_FILE} -e main -t --glsl-version 460 --enhanced-msgs --target-env vulkan1.3 --spirv-val --vn ${SPIRV_C_NAME}
         )
 
-        add_custom_target(
-            SPIRV_OPT_TARGET
-            COMMAND ${SPIRV_OPT} ${SPIRV_FILE} -O -o ${SPIRV_OPT_FILE} --strip-debug 
-        )
+        add_dependencies(${PROJECT_NAME} SPIRV_TARGET SPIRV_C_TARGET)
+
+        if(SPIRV_OPT_TARGET AND PXD_OPTIMIZE_SHADERS)
+            add_custom_target(
+                SPIRV_OPT_TARGET
+                COMMAND ${SPIRV_OPT} ${SPIRV_FILE} -O -o ${SPIRV_OPT_FILE} --strip-debug 
+            )
+
+            add_dependencies(${PROJECT_NAME} SPIRV_OPT_TARGET)
+        endif()
     endforeach()
 else()
     message(STATUS "Cant find the GLSL Validator program so skipping building shaders")
 endif()
 
-add_dependencies(${PROJECT_NAME} SPIRV_TARGET SPIRV_C_TARGET SPIRV_OPT_TARGET)
 
 target_precompile_headers(
     ${PROJECT_NAME} PRIVATE
