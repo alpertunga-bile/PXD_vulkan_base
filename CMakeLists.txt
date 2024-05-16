@@ -40,7 +40,7 @@ set(PXD_SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
 set(PXD_COMPILED_SHADER_DIR ${PXD_SHADER_DIR}/compiled)
 set(PXD_COMPILED_SHADER_INCLUDE_DIR ${PXD_INCLUDE_DIR}/shaders)
 
-set(PXD_OPTIMIZE_SHADERS ON)
+set(PXD_OPTIMIZE_SHADERS "ON")
 
 ################################################################################
 ## Submodule DEFINITIONS
@@ -67,6 +67,7 @@ set(PXD_HEADER_FILES
     ${PXD_INCLUDE_DIR}/debug.h
     ${PXD_INCLUDE_DIR}/utility.h
     ${PXD_INCLUDE_DIR}/logger.hpp
+    ${PXD_INCLUDE_DIR}/gui_config.h
 
     # third party headers
     ${PXD_THIRD_PARTY_DIR}/meshoptimizer/src/meshoptimizer.h
@@ -150,6 +151,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${PXD_LIBS_TO_LINK})
 ## Compile Shaders
 
 if(GLSL_VALIDATOR)
+    set(TARGET_ENV vulkan1.3)
+    set(GLSL_VERSION 460)
+
     file(GLOB_RECURSE PXD_GLSL_FILES
         "${PXD_SHADER_DIR}/*.frag"
         "${PXD_SHADER_DIR}/*.vert"
@@ -181,20 +185,20 @@ if(GLSL_VALIDATOR)
 
         add_custom_target(
             SPIRV_TARGET
-            COMMAND ${GLSL_VALIDATOR} -V ${GLSL_FILE} -o ${SPIRV_FILE} -e main -t --glsl-version 460 --enhanced-msgs --target-env vulkan1.3 --spirv-val
+            COMMAND ${GLSL_VALIDATOR} -V ${GLSL_FILE} -o ${SPIRV_FILE} -e main -t --glsl-version ${GLSL_VERSION} --enhanced-msgs --target-env ${TARGET_ENV} -I${PXD_SHADER_DIR}
         )
 
         add_custom_target(
             SPIRV_C_TARGET
-            COMMAND ${GLSL_VALIDATOR} -V ${GLSL_FILE} -o ${SPIRV_C_HEADER_FILE} -e main -t --glsl-version 460 --enhanced-msgs --target-env vulkan1.3 --spirv-val --vn ${SPIRV_C_NAME}
+            COMMAND ${GLSL_VALIDATOR} -V ${GLSL_FILE} -o ${SPIRV_C_HEADER_FILE} -e main -t --glsl-version ${GLSL_VERSION} --enhanced-msgs --target-env ${TARGET_ENV} -I${PXD_SHADER_DIR} --vn ${SPIRV_C_NAME}
         )
 
         add_dependencies(${PROJECT_NAME} SPIRV_TARGET SPIRV_C_TARGET)
 
-        if(SPIRV_OPT_TARGET AND PXD_OPTIMIZE_SHADERS)
+        if(SPIRV_OPT_TARGET AND (${PXD_OPTIMIZE_SHADERS} EQUAL "ON"))
             add_custom_target(
                 SPIRV_OPT_TARGET
-                COMMAND ${SPIRV_OPT} ${SPIRV_FILE} -O -o ${SPIRV_OPT_FILE} --strip-debug 
+                COMMAND ${SPIRV_OPT} ${SPIRV_FILE} -O -o ${SPIRV_OPT_FILE} --strip-debug --target-env=${TARGET_ENV} --upgrade-memory-model --remove-duplicates --amd-ext-to-khr
             )
 
             add_dependencies(${PROJECT_NAME} SPIRV_OPT_TARGET)
