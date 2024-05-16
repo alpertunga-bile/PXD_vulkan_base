@@ -1,4 +1,5 @@
-# vulkan_base
+# PXD_vulkan_base
+
 - Starting point for vulkan projects
 - Using C++20
 - Precompile headers functionality is used in CMake
@@ -6,6 +7,7 @@
 - Exports are disabled for assimp library
 
 ## Submodules
+
 - assimp
 - glfw
 - glm
@@ -14,3 +16,4 @@
 - SIMDString
 - vma
 - volk
+- fmt

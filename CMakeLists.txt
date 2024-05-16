@@ -1,16 +1,48 @@
 cmake_minimum_required(VERSION 3.5.0)
-project(vulkan_proj VERSION 0.1.0 LANGUAGES C CXX)
+project(pxd_vulkan_proj VERSION 0.1.0 LANGUAGES C CXX)
 
 include(CTest)
 enable_testing()
 
 ################################################################################
+## Function DEFINITIONS
+
+function(set_conf conf_name)
+    if(NOT MSVC)
+        set(CMAKE_BUILD_TYPE ${conf_name})
+    endif()
+endfunction()
+
+function(set_debug)
+    set_conf(Debug)
+endfunction()
+
+function(set_release)
+    set_conf(Release)
+endfunction(set_release)
+
+################################################################################
 ## GLOBAL DEFINITIONS
 
-set(CMAKE_BUILD_TYPE Debug)
-set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-list(APPEND CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
+endif(NOT MSVC)
+
+SET_DEBUG()
+
+set(PXD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/includes)
+set(PXD_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sources)
+set(PXD_THIRD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third-party)
+set(PXD_SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
+set(PXD_COMPILED_SHADER_DIR ${PXD_SHADER_DIR}/compiled)
+
+################################################################################
+## Submodule DEFINITIONS
+
+set(BUILD_SHARED_LIBS OFF)
 
 set(GLM_ENABLE_CXX_20 ON)
 set(GLM_ENABLE_SIMD_AVX2 ON)
@@ -21,93 +53,156 @@ set(ASSIMP_NO_EXPORT ON)
 set(ASSIMP_WARNINGS_AS_ERRORS OFF)
 
 find_package(Vulkan REQUIRED)
+find_program(GLSL_VALIDATOR glslangValidator HINTS /usr/bin /usr/local/bin $ENV{VULKAN_SDK}/Bin/ $ENV{VULKAN_SDK}/Bin32/)
+find_program(SPIRV_OPT spirv-opt HINTS /usr/bin /usr/local/bin $ENV{VULKAN_SDK}/Bin/ $ENV{VULKAN_SDK}/Bin32/)
 
-set(HEADER_FILES
-    includes/debug.h
-    includes/utility.h
-    includes/logger.h
+
+################################################################################
+## Project DEFINITIONS
+
+set(PXD_HEADER_FILES
+    ${PXD_INCLUDE_DIR}/debug.h
+    ${PXD_INCLUDE_DIR}/utility.h
+    ${PXD_INCLUDE_DIR}/logger.hpp
 
     # third party headers
-    third-party/meshoptimizer/src/meshoptimizer.h
-    third-party/SIMDString/SIMDString.h
-    third-party/glm/glm/glm.hpp
-    third-party/glm/glm/gtc/type_ptr.hpp
-    third-party/volk/volk.h
-    third-party/vma/include/vk_mem_alloc.h
-    third-party/glfw/include/GLFW/glfw3.h
+    ${PXD_THIRD_PARTY_DIR}/meshoptimizer/src/meshoptimizer.h
+    ${PXD_THIRD_PARTY_DIR}/SIMDString/SIMDString.h
+    ${PXD_THIRD_PARTY_DIR}/glm/glm/glm.hpp
+    ${PXD_THIRD_PARTY_DIR}/glm/glm/gtc/type_ptr.hpp
+    ${PXD_THIRD_PARTY_DIR}/volk/volk.h
+    ${PXD_THIRD_PARTY_DIR}/vma/include/vk_mem_alloc.h
+    ${PXD_THIRD_PARTY_DIR}/glfw/include/GLFW/glfw3.h
+    ${PXD_THIRD_PARTY_DIR}/fmt/include/fmt/core.h
+    ${PXD_THIRD_PARTY_DIR}/fmt/include/fmt/os.h
 
-    #[[
-    third-party/imgui/imgui.h
-    third-party/imgui/imgui_internal.h
-    third-party/imgui/imconfig.h
-    third-party/imgui/imstb_truetype.h
-    third-party/imgui/imstb_rectpack.h
-    third-party/imgui/imstb_textedit.h
-    third-party/imgui/backends/imgui_impl_glfw.h
-    third-party/imgui/backends/imgui_impl_vulkan.h
-    #]]
+    ${PXD_THIRD_PARTY_DIR}/imgui/imgui.h
+    ${PXD_THIRD_PARTY_DIR}/imgui/imgui_internal.h
+    ${PXD_THIRD_PARTY_DIR}/imgui/imconfig.h
+    ${PXD_THIRD_PARTY_DIR}/imgui/imstb_truetype.h
+    ${PXD_THIRD_PARTY_DIR}/imgui/imstb_rectpack.h
+    ${PXD_THIRD_PARTY_DIR}/imgui/imstb_textedit.h
+    ${PXD_THIRD_PARTY_DIR}/imgui/backends/imgui_impl_glfw.h
+    ${PXD_THIRD_PARTY_DIR}/imgui/backends/imgui_impl_vulkan.h
 )
 
-set(SOURCE_FILES
-    main.cpp
+set(PXD_SOURCE_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 
-    sources/debug.cpp
-    sources/logger.cpp
+    ${PXD_SOURCE_DIR}/debug.cpp
+    ${PXD_SOURCE_DIR}/logger.cpp
 
-    third-party/SIMDString/SIMDString.cpp
+    ${PXD_THIRD_PARTY_DIR}/SIMDString/SIMDString.cpp
 
-    #[[
-    third-party/imgui/imgui.cpp
-    third-party/imgui/imgui_widgets.cpp
-    third-party/imgui/imgui_tables.cpp
-    third-party/imgui/imgui_draw.cpp
-    third-party/imgui/backends/imgui_impl_glfw.cpp
-    third-party/imgui/backends/imgui_impl_vulkan.cpp
-    #]]
+    ${PXD_THIRD_PARTY_DIR}/imgui/imgui.cpp
+    ${PXD_THIRD_PARTY_DIR}/imgui/imgui_widgets.cpp
+    ${PXD_THIRD_PARTY_DIR}/imgui/imgui_tables.cpp
+    ${PXD_THIRD_PARTY_DIR}/imgui/imgui_draw.cpp
+    ${PXD_THIRD_PARTY_DIR}/imgui/backends/imgui_impl_glfw.cpp
+    ${PXD_THIRD_PARTY_DIR}/imgui/backends/imgui_impl_vulkan.cpp
 
-    ${HEADER_FILES}
+    ${PXD_HEADER_FILES}
 )
 
 include_directories(
-    includes
-    third-party/glm/glm
-    third-party/assimp/include/assimp
-    third-party/meshoptimizer/src
-    third-party/glfw/include/GLFW
-    third-party/volk
-    third-party/vma/include
-    third-party/SIMDString
-    third-party/imgui
-    third-party/imgui/backends
+    ${PXD_INCLUDE_DIR}
+    ${PXD_THIRD_PARTY_DIR}/fmt/include/fmt
+    ${PXD_THIRD_PARTY_DIR}/glm/glm
+    ${PXD_THIRD_PARTY_DIR}/assimp/include/assimp
+    ${PXD_THIRD_PARTY_DIR}/meshoptimizer/src
+    ${PXD_THIRD_PARTY_DIR}/glfw/include/GLFW
+    ${PXD_THIRD_PARTY_DIR}/volk
+    ${PXD_THIRD_PARTY_DIR}/vma/include
+    ${PXD_THIRD_PARTY_DIR}/SIMDString
+    ${PXD_THIRD_PARTY_DIR}/imgui
+    ${PXD_THIRD_PARTY_DIR}/imgui/backends
     ${Vulkan_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-target_link_libraries(
-    ${PROJECT_NAME} PRIVATE
+SET_RELEASE()
+add_subdirectory(${PXD_THIRD_PARTY_DIR}/assimp)
+add_subdirectory(${PXD_THIRD_PARTY_DIR}/glfw)
+add_subdirectory(${PXD_THIRD_PARTY_DIR}/glm)
+add_subdirectory(${PXD_THIRD_PARTY_DIR}/meshoptimizer)
+add_subdirectory(${PXD_THIRD_PARTY_DIR}/volk)
+add_subdirectory(${PXD_THIRD_PARTY_DIR}/fmt)
+SET_DEBUG()
+
+set(PXD_LIBS_TO_LINK
     glm
     assimp::assimp
     glfw
     meshoptimizer
     volk
+    fmt::fmt
 )
 
-set(CMAKE_BUILD_TYPE Release)
-add_subdirectory(third-party/assimp)
-add_subdirectory(third-party/glfw)
-add_subdirectory(third-party/glm)
-add_subdirectory(third-party/meshoptimizer)
-add_subdirectory(third-party/volk)
-set(CMAKE_BUILD_TYPE Debug)
+add_executable(${PROJECT_NAME} ${PXD_SOURCE_FILES})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE ${PXD_LIBS_TO_LINK})
+
+################################################################################
+## Compile Shaders
+
+if(GLSL_VALIDATOR)
+    file(GLOB_RECURSE PXD_GLSL_FILES
+        "${PXD_SHADER_DIR}/*.frag"
+        "${PXD_SHADER_DIR}/*.vert"
+        "${PXD_SHADER_DIR}/*.comp"
+        "${PXD_SHADER_DIR}/*.mesh"
+        "${PXD_SHADER_DIR}/*.task"
+        "${PXD_SHADER_DIR}/*.tesc"
+        "${PXD_SHADER_DIR}/*.tese"
+        "${PXD_SHADER_DIR}/*.glsl"
+        "${PXD_SHADER_DIR}/*.geom"
+        "${PXD_SHADER_DIR}/*.rgen"
+        "${PXD_SHADER_DIR}/*.rint"
+        "${PXD_SHADER_DIR}/*.rahit"
+        "${PXD_SHADER_DIR}/*.rchit"
+        "${PXD_SHADER_DIR}/*.rmiss"
+        "${PXD_SHADER_DIR}/*.rcall"
+    )
+
+    message(STATUS "GLSL Validator is found. Starting building shaders ...")
+
+    foreach(GLSL_FILE ${PXD_GLSL_FILES})
+        message(STATUS "Building ${GLSL_FILE} Shader")
+        get_filename_component(GLSL_FILENAME ${GLSL_FILE} NAME_WE)
+        set(SPIRV_FILE "${PXD_COMPILED_SHADER_DIR}/${GLSL_FILENAME}.spv")
+        
+        set(SPIRV_OPT_NAME "${GLSL_FILENAME}_opt")
+        set(SPIRV_OPT_FILE "${PXD_COMPILED_SHADER_DIR}/${SPIRV_OPT_NAME}.spv")
+
+        set(SPIRV_C_NAME "${GLSL_FILENAME}_spv")
+        set(SPIRV_C_HEADER_FILE "${PXD_COMPILED_SHADER_DIR}/${SPIRV_C_NAME}.h")
+
+        add_custom_target(
+            SPIRV_TARGET
+            COMMAND ${GLSL_VALIDATOR} -V ${GLSL_FILE} -o ${SPIRV_FILE} -e main -t --glsl-version 460 --enhanced-msgs --target-env vulkan1.3 --spirv-val
+        )
+
+        add_custom_target(
+            SPIRV_C_TARGET
+            COMMAND ${GLSL_VALIDATOR} -V ${GLSL_FILE} -o ${SPIRV_C_HEADER_FILE} -e main -t --glsl-version 460 --enhanced-msgs --target-env vulkan1.3 --spirv-val --vn ${SPIRV_C_NAME}
+        )
+
+        add_custom_target(
+            SPIRV_OPT_TARGET
+            COMMAND ${SPIRV_OPT} ${SPIRV_FILE} -O -o ${SPIRV_OPT_FILE} --strip-debug 
+        )
+    endforeach()
+else()
+    message(STATUS "Cant find the GLSL Validator program so skipping building shaders")
+endif()
+
+add_dependencies(${PROJECT_NAME} SPIRV_TARGET SPIRV_C_TARGET SPIRV_OPT_TARGET)
 
 target_precompile_headers(
     ${PROJECT_NAME} PRIVATE
-    ${HEADER_FILES}
+    ${PXD_HEADER_FILES}
     <filesystem>
-    <format>
+    <fstream>
 )
-
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
