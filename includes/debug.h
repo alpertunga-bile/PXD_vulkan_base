@@ -1,6 +1,12 @@
 #pragma once
 
-#include "utility.h"
+#ifndef __FUNCTION_NAME__
+#ifdef _WIN32
+#define __FUNCTION_NAME__ __FUNCTION__
+#else
+#define __FUNCTION_NAME__ __func__
+#endif
+#endif
 
 enum VkResult;
 

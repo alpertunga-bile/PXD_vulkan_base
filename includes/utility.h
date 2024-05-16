@@ -4,7 +4,7 @@
 using String = SIMDString<64>;
 
 inline bool
-IsValid(void* object)
+IsValid(void* object) noexcept
 {
   return object != nullptr ? true : false;
 }

@@ -1,11 +1,13 @@
-#include "includes/logger.h"
+#include "logger.hpp"
+
+#include "debug.h"
 
 int
 main()
 {
-  create_log_file();
-
   LOG_INFO("Startup");
+
+  VK_CHECK(VK_NOT_READY);
 
   return 0;
 }

@@ -1,88 +1,90 @@
-#include "logger.h"
+#include "logger.hpp"
 
 #include "utility.h"
 
+#include "core.h"
 #include <filesystem>
-#include <format>
-#include <fstream>
 
-void
-create_log_file()
+const String log_filename = "app.log";
+
+namespace pxd {
+Logger::Logger()
 {
-  if (std::filesystem::exists(std::filesystem::path("app.log"))) {
-    std::filesystem::remove(std::filesystem::path("app.log"));
-  } else {
-    std::ofstream log_file("app.log");
-    log_file.close();
+  fopen_s(&log_file, log_filename.c_str(), "w");
+}
+
+inline Logger::~Logger() noexcept
+{
+  if (log_file != nullptr) {
+    fclose(log_file);
   }
+
+  delete instance;
 }
 
 void
-write_to_log_file(const char* log_string)
+Logger::log_info(const char* msg,
+                 const char* filename,
+                 int         line,
+                 const char* function_name) noexcept
 {
-  std::ofstream log_file("app.log", std::ios_base::app);
-  log_file << log_string;
-  log_file.close();
+  log("INFO", msg, filename, line, function_name);
 }
 
-String
-get_output_string(const char* filename, int line, const char* function_name)
+void
+Logger::log_warning(const char* msg,
+                    const char* filename,
+                    int         line,
+                    const char* function_name) noexcept
+{
+  log("WARNING", msg, filename, line, function_name);
+}
+
+void
+Logger::log_error(const char* msg,
+                  const char* filename,
+                  int         line,
+                  const char* function_name) noexcept
+{
+  log("ERROR", msg, filename, line, function_name);
+}
+
+Logger* Logger::instance = nullptr;
+
+Logger*
+Logger::get_instance() noexcept
+{
+  if (instance == nullptr) {
+    instance = new Logger();
+  }
+
+  return instance;
+}
+
+void
+Logger::log(const char* log_level,
+            const char* msg,
+            const char* filename,
+            int         line,
+            const char* func_name)
 {
   auto base_filename = std::filesystem::path(filename).filename().string();
 
-  auto formattedString =
-    std::format("{} /_\\ {} /_\\ {}", base_filename, line, function_name);
-
-  return String(formattedString);
+  if (!just_log_file) {
+    fmt::print("[{:8s}] /_\\ {:50s} /_\\ {:20s} /_\\ {:5d} /_\\ {}\n",
+               log_level,
+               msg,
+               base_filename,
+               line,
+               func_name);
+  }
+  fmt::print(log_file,
+             "[{:8s}] /_\\ {:50s} /_\\ {:20s} /_\\ {:5d} /_\\ {}\n",
+             log_level,
+             msg,
+             base_filename,
+             line,
+             func_name);
 }
 
-void
-log_info(const char* msg,
-         const char* time,
-         const char* filename,
-         int         line,
-         const char* function_name)
-{
-  std::string formatStr =
-    std::format("[{}] /_\\ [    INFO] /_\\ {} /_\\ {}\n",
-                time,
-                msg,
-                get_output_string(filename, line, function_name).c_str());
-
-  printf("%s", formatStr.c_str());
-  write_to_log_file(formatStr.c_str());
-}
-
-void
-log_warning(const char* msg,
-            const char* time,
-            const char* filename,
-            int         line,
-            const char* function_name)
-{
-  std::string formatStr =
-    std::format("[{}] /_\\ [ WARNING] /_\\ {} /_\\ {}\n",
-                time,
-                msg,
-                get_output_string(filename, line, function_name).c_str());
-
-  printf("%s", formatStr.c_str());
-  write_to_log_file(formatStr.c_str());
-}
-
-void
-log_error(const char* msg,
-          const char* time,
-          const char* filename,
-          int         line,
-          const char* function_name)
-{
-  std::string formatStr =
-    std::format("[{}] /_\\ [  FAILED] /_\\ {} /_\\ {}\n",
-                time,
-                msg,
-                get_output_string(filename, line, function_name).c_str());
-
-  printf("%s", formatStr.c_str());
-  write_to_log_file(formatStr.c_str());
-}
+} // namespace pxd

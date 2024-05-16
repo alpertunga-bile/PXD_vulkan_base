@@ -5,7 +5,7 @@
 
 #include "vulkan/vk_enum_string_helper.h"
 
-#include "logger.h"
+#include "logger.hpp"
 
 void
 vk_check(VkResult    result,
@@ -20,7 +20,12 @@ vk_check(VkResult    result,
 
   std::string res = string_VkResult(result);
 
-  log_error(res.c_str(), time, filename, line, function_name);
+  {
+    pxd::Logger* logger = pxd::Logger::get_instance();
+    logger->log_error(res.c_str(), filename, line, function_name);
+  }
+
+  exit(EXIT_FAILURE);
 }
 
 bool
@@ -36,7 +41,10 @@ vk_ret(VkResult    result,
 
   std::string res = string_VkResult(result);
 
-  log_warning(res.c_str(), time, filename, line, function_name);
+  {
+    pxd::Logger* logger = pxd::Logger::get_instance();
+    logger->log_warning(res.c_str(), filename, line, function_name);
+  }
 
   return false;
 }
